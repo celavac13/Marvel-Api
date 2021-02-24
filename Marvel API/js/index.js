@@ -5,8 +5,7 @@ let timeout = null;
 let marvelHerosDiv = document.querySelector(".marvelHerosDiv");
 let paginationNumberDiv = document.querySelector(".page-numbers");
 let resultsPerPage = 12;
-let currentPage = 1;
-
+let currentPage;
 window.onload = function() {
     likedFunction() 
     settingButtonsOnLoad()
@@ -37,7 +36,7 @@ inputValue.addEventListener("input", function(){
 
 
 function marvelResult(hero){
-    
+    currentPage = 1;
     displayHeros(hero, marvelHerosDiv, resultsPerPage, currentPage);
     setupPageNumbers(hero, paginationNumberDiv, resultsPerPage, currentPage);
     settingButtons();
@@ -64,6 +63,7 @@ function marvelResult(hero){
 function displayHeros (heros, divWrapper, herosPerPage, page){
     divWrapper.innerHTML = "";
     //ako je page 1, onda ce page biti = page - 1, to je 0
+    console.log(page);
     page--;
 
     //za prvu stranu ce biti prikazano prvih 12 rezultata, 12 * 0 = 0
@@ -111,8 +111,6 @@ function displayHeros (heros, divWrapper, herosPerPage, page){
 
     // funkcija za kreiranje number buttona na stranici
 function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
-    
-
     numberWrapper.innerHTML = "";
     if(Math.ceil(heros.length / herosPerPage) > 1){
     let leftBtn = document.createElement("button");
