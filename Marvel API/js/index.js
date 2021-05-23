@@ -6,6 +6,7 @@ let marvelHerosDiv = document.querySelector(".marvelHerosDiv");
 let paginationNumberDiv = document.querySelector(".page-numbers");
 let resultsPerPage = 12;
 let currentPage;
+
 window.onload = function() {
     likedFunction() 
     settingButtonsOnLoad()
@@ -19,58 +20,47 @@ inputValue.addEventListener("input", function(){
         var hash = md5(ts + privateKey + publicKey).toString();
         marvelHerosDiv.innerHTML = "";
         paginationNumberDiv.innerHTML = "";
-        //tamplate literals
-        //fetch("https://gateway.marvel.com:443/v1/public/characters?nameStartsWith=" + inputValue.value + "&ts=" + ts + "&apikey=" + publicKey + "&hash=" + hash)
         fetch(`https://gateway.marvel.com:443/v1/public/characters?nameStartsWith=${inputValue.value}&limit=99&ts=${ts}&apikey=${publicKey}&hash=${hash}`)
+        .then(loader())
         .then(res => res.json())
         .then(res => marvelResult(res.data.results))
     } else{
         marvelHerosDiv.innerHTML = "";
         paginationNumberDiv.innerHTML = "";
-        likedFunction()
-        settingButtonsOnLoad()
+        likedFunction();
+        settingButtonsOnLoad();
     }
 }, 500);
 });
 
 
-
+function noResult(){
+   let noResultText = document.createElement("p");
+   marvelHerosDiv.appendChild(noResultText);
+   noResultText.textContent = `Heros that starts with ${inputValue.value}, doesn't exist`;
+   noResultText.className = "no-result-p"
+}
 function marvelResult(hero){
+    if (hero.length < 1) {
+        noResult()
+        document.querySelector("#loader").style.display = "none";
+        document.querySelectorAll(".marvelHerosDiv")[0].style.visibility = "visible";
+    } else {
     currentPage = 1;
     displayHeros(hero, marvelHerosDiv, resultsPerPage, currentPage);
     setupPageNumbers(hero, paginationNumberDiv, resultsPerPage, currentPage);
     settingButtons();
+    document.querySelector("#loader").style.display = "none";
+    document.querySelectorAll(".marvelHerosDiv")[0].style.visibility = "visible";
+    }
+}   
 
-    /* hero.forEach((element, index) => {
-        var holderDiv = document.createElement("div");
-        var heroImg = document.createElement("img");
-        var heroName = document.createElement("p");
-        var likeButton = document.createElement("button");
-        marvelHerosDiv.appendChild(holderDiv);
-        holderDiv.appendChild(heroImg);
-        holderDiv.appendChild(heroName);
-        holderDiv.appendChild(likeButton);
-        holderDiv.className = "col-lg-3 col-md-4 col-sm-6 col-12 d-flex flex-column justify-content-center";
-        heroImg.src = hero[index].thumbnail.path + "/portrait_incredible." + hero[index].thumbnail.extension;
-        heroName.textContent = hero[index].name;
-
-    }); */
-    //kada kliknemo na button salje podatke u local storage
-   
-}
-
-//funkcija za prikazivanje heroja
+//showing items
 function displayHeros (heros, divWrapper, herosPerPage, page){
     divWrapper.innerHTML = "";
-    //ako je page 1, onda ce page biti = page - 1, to je 0
-    console.log(page);
     page--;
-
-    //za prvu stranu ce biti prikazano prvih 12 rezultata, 12 * 0 = 0
     let start = herosPerPage * page;
     let end = start + herosPerPage;
-
-    //definisanje odakle dokle ce biti prikazani rezultati array[index]
     let paginatedItems = heros.slice(start, end);
 
     //adding divs with data
@@ -89,7 +79,7 @@ function displayHeros (heros, divWrapper, herosPerPage, page){
             holderDiv.className = "col-lg-3 col-md-4 col-sm-6 col-12 d-flex flex-column justify-content-center heroDiv";
             heroImg.src = heroFromStorage.img;
             heroName.textContent = heroFromStorage.name;
-            likeButton.className = "btn btn-primary likeBtn liked";
+            likeButton.className = "btn btn-danger likeBtn liked";
             likeButton.textContent = heroFromStorage.liked;
         } else {
         let holderDiv = document.createElement("div");
@@ -103,24 +93,22 @@ function displayHeros (heros, divWrapper, herosPerPage, page){
         holderDiv.className = "col-lg-3 col-md-4 col-sm-6 col-12 d-flex flex-column justify-content-center heroDiv";
         heroImg.src = paginatedItems[i].thumbnail.path + "/portrait_incredible." + paginatedItems[i].thumbnail.extension;
         heroName.textContent = paginatedItems[i].name;
-        likeButton.className = "btn btn-primary likeBtn";
+        likeButton.className = "btn btn-danger likeBtn";
         likeButton.textContent = "Like";
         }
     }
 }
 
-    // funkcija za kreiranje number buttona na stranici
+//paggnation
 function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
     numberWrapper.innerHTML = "";
     if(Math.ceil(heros.length / herosPerPage) > 1){
     let leftBtn = document.createElement("button");
     let rightBtn = document.createElement("button");
 
-    //funkcija za strelicu levo i desno
     function showPage(n){
         currentPage += n;
 
-        //podesavanje active pageNum-a
         if(currentPage > 0 && currentPage <= Math.ceil(heros.length / herosPerPage)){
         let btnActive = document.querySelector(".active");
         btnActive.classList.remove("active");
@@ -128,10 +116,8 @@ function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
         allBtn[currentPage - 1].classList.add("active");
         }
         
-        //funkcija za prikazivanje te strane na kojoj smo
         displayHeros(heros, marvelHerosDiv, resultsPerPage, currentPage);
         settingButtons();
-        //podesavanje strelica levo i desno, da nestanu kad smo na 1oj ili zadnjoj strani
         
         if (currentPage == 1) {
             leftBtn.classList.add("hide");
@@ -145,14 +131,12 @@ function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
         }
     }
 
-    //strelica za levo
     numberWrapper.appendChild(leftBtn);
     leftBtn.textContent = "<";
     leftBtn.addEventListener("click", function(){
         showPage(-1);   
     });
 
-    //dodavanje buttona za sve strane
     let pageCount = Math.ceil(heros.length / herosPerPage);
     for (let i = 1; i < pageCount + 1; i++){
         let btn = paginationButton(i, heros);
@@ -160,8 +144,6 @@ function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
         btn.classList.add("allBtn");
     }
     
-
-    //strelica za desno
     numberWrapper.appendChild(rightBtn);
     rightBtn.textContent = ">";
     rightBtn.addEventListener("click", function(){
@@ -169,11 +151,8 @@ function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
     });
 
     let allBtn = document.querySelectorAll(".allBtn");
-
-    //podesavanje za strelicu kad page ucita, da se ne vidi leva
     if (page == 1) leftBtn.classList.add("hide");  
 
-    //podesavanje za strelice kada koristimo brojeve umesto strelica
     allBtn[0].addEventListener("click", function(){
         leftBtn.classList.add("hide");
         rightBtn.classList.remove("hide");
@@ -192,8 +171,6 @@ function setupPageNumbers(heros, numberWrapper, herosPerPage, page){
         });
     };
 
-
-//funkcija za buttone, dodavanje event listenera i class-a
 function paginationButton(page, heros){
     let buttonPage = document.createElement("button");
     buttonPage.innerText = page;
@@ -213,7 +190,7 @@ function paginationButton(page, heros){
 };
 }}
 
-//podesavanje like buttona
+//like button
 function settingButtons(){
     let herosDiv = document.querySelectorAll(".heroDiv");
     herosDiv.forEach((item,index) => {
@@ -236,6 +213,7 @@ function settingButtons(){
         });
     });
 }
+
 function likedFunction() {
     if(localStorage.length !== 0){
         for(let i = 0; i < localStorage.length; i++){
@@ -252,23 +230,31 @@ function likedFunction() {
             holderDiv.className = "col-lg-3 col-md-4 col-sm-6 col-12 d-flex flex-column justify-content-center heroDiv";
             heroImg.src = hero.img;
             heroName.textContent = hero.name;
-            likeButton.className = "btn btn-primary likeBtn liked";
+            likeButton.className = "btn btn-danger likeBtn liked";
             likeButton.textContent = hero.liked;
         }
     }
 }
+
 function settingButtonsOnLoad(){
     let herosDiv = document.querySelectorAll(".heroDiv");
-    herosDiv.forEach((item,index) => {
-        let likeBtn = herosDiv[index].getElementsByTagName("button")[0];
+
+    for(let i = 0; i < herosDiv.length; i++) {
+        let likeBtn = herosDiv[i].getElementsByTagName("button")[0];
         let heroObj = {};
-        heroObj.img = herosDiv[index].getElementsByTagName("img")[0].src;
-        heroObj.name = herosDiv[index].getElementsByTagName("p")[0].textContent;
+        heroObj.img = herosDiv[i].getElementsByTagName("img")[0].src;
+        heroObj.name = herosDiv[i].getElementsByTagName("p")[0].textContent;
+        
         likeBtn.addEventListener("click", function(){
-                herosDiv[index].setAttribute("style", "display: none !important;")
-                console.log(herosDiv[index]);
+                herosDiv[i].setAttribute("style", "display: none !important;")
                 likeBtn.classList.remove("liked");
                 localStorage.removeItem(heroObj.name);
             });
-    });
+    };
+}
+
+function loader(){
+    document.querySelectorAll(".marvelHerosDiv")[0].style.visibility = "hidden";
+    document.querySelector("#loader").style.visibility = "visible";
+    document.querySelector("#loader").style.display = "block";
 }
