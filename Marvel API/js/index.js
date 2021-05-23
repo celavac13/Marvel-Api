@@ -20,8 +20,8 @@ inputValue.addEventListener("input", function(){
         var hash = md5(ts + privateKey + publicKey).toString();
         marvelHerosDiv.innerHTML = "";
         paginationNumberDiv.innerHTML = "";
+        loader();
         fetch(`https://gateway.marvel.com:443/v1/public/characters?nameStartsWith=${inputValue.value}&limit=99&ts=${ts}&apikey=${publicKey}&hash=${hash}`)
-        .then(loader())
         .then(res => res.json())
         .then(res => marvelResult(res.data.results))
     } else{
